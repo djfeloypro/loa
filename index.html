@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamHD Live - TV Online</title>
+    <meta name="theme-color" content="#0f0f0f">
+    <link rel="stylesheet" href="style.css">
+    <!-- Ícones -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <!-- HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- flv.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flv.js/1.6.2/flv.min.js"></script>
+    <!-- Intl Tel Input (Validação de Telefone) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <img id="channelLogo" alt="Logo do Canal" style="height: 40px; max-width: 150px;">
+        </div>
+        <div class="user-menu">
+            <span class="live-badge">AO VIVO</span>
+            
+            <!-- Botão de Login do Usuário -->
+            <button id="userLoginBtn" onclick="openUserLogin()" class="btn-login" tabindex="0">ENTRAR</button>
+            
+            <!-- Área do Usuário Logado -->
+            <div id="userProfileArea" style="display: none; align-items: center; gap: 10px; cursor: pointer;" onclick="openUserProfile()">
+                <span id="userPhoneDisplay" style="display: none;"></span>
+                <img id="navUserAvatar" src="https://via.placeholder.com/32" class="user-avatar-small" alt="Avatar">
+            </div>
+
+            <a href="admin.html" title="Acesso Admin" style="color: inherit; text-decoration: none; display: flex; align-items: center;" tabindex="0"><i class="material-icons" style="font-size: 20px; opacity: 0.5;">lock</i></a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Área do Player -->
+        <section class="player-section">
+            <div class="video-wrapper">
+
+                <!-- Player StreamHD Profissional -->
+                <iframe 
+                    id="streamFrame"
+                    width="100%" 
+                    height="100%" 
+                    src="" 
+                    title="StreamHD Player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>
+
+                <!-- Player HLS (Video Tag) -->
+                <video id="streamVideo" playsinline style="display: none; width: 100%; height: 100%; background: #000;"></video>
+
+                <!-- Controles Personalizados -->
+                <div id="centerPlayBtn" class="center-play-overlay" onclick="togglePlay()">
+                    <div class="play-circle"><i class="material-icons">play_arrow</i></div>
+                </div>
+
+                <div class="custom-controls" id="customControls">
+                    <button class="control-btn interactive-btn" onclick="togglePlay()" title="Play/Pause">
+                        <i class="material-icons" id="controlPlayIcon">play_arrow</i>
+                    </button>
+                    <button class="control-btn interactive-btn" onclick="toggleQuality()" title="Qualidade: HD">
+                        <i class="material-icons" id="qualityIcon" style="color: #fff;">hd</i>
+                    </button>
+                    <div class="control-spacer"></div>
+                </div>
+
+                <!-- Enquete Overlay -->
+                <div id="pollOverlay" class="poll-overlay">
+                    <h3 id="pollQuestion"></h3>
+                    <div id="pollOptions"></div>
+                </div>
+
+                <!-- Ticker / Marquee -->
+                <div id="tickerWrap" class="ticker-wrap">
+                    <div id="tickerContent" class="ticker-content"></div>
+                </div>
+
+                <!-- Notificação Toast -->
+                <div id="toastNotification" class="toast-notification"></div>
+            </div>
+            
+            <div class="stream-info">
+                <div class="info-left">
+                    <h1>Nós HD</h1>
+                    <p class="current-program" id="currentProgramTitle">Carregando programa...</p>
+                    <div class="program-progress-container" id="progressContainer" style="display: none;">
+                        <div class="program-progress-bar" id="progressBar"></div>
+                        <span class="time-remaining" id="timeRemaining"></span>
+                    </div>
+                </div>
+                <div class="info-right">
+                    <button id="whatsappShareBtn" class="share-btn interactive-btn" onclick="shareOnWhatsApp()" title="Compartilhar no WhatsApp">
+                        <i class="material-icons">share</i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- EPG (Guia de Programação) -->
+        <section class="epg-section">
+            <h2>Programação de Hoje</h2>
+            <div class="epg-date" id="currentDate"></div>
+            
+            <div class="epg-search-container">
+                <input type="text" id="epgSearch" placeholder="Buscar programas (título ou categoria)...">
+            </div>
+            
+            <div class="epg-list" id="epgList">
+                <!-- A lista será gerada via JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Login de Usuário -->
+    <div id="userLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #1f1f1f; padding: 30px; border-radius: 8px; width: 90%; max-width: 350px; text-align: center;">
+            <h3 style="margin-bottom: 20px;">Login / Cadastro</h3>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">Digite seu WhatsApp para salvar favoritos.</p>
+            <input type="tel" id="userPhoneInput" class="phone-input-styled">
+            <button onclick="submitUserLogin()" style="background: #e50914; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%;" tabindex="0">Entrar</button>
+            <button onclick="closeUserLogin()" style="background: none; border: none; color: #aaa; margin-top: 10px; cursor: pointer; font-size: 12px;" tabindex="0">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Perfil do Usuário -->
+    <div id="userProfileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #1f1f1f; padding: 30px; border-radius: 8px; width: 90%; max-width: 350px; text-align: center; position: relative;">
+            <button onclick="closeUserProfile()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #aaa; cursor: pointer;"><i class="material-icons">close</i></button>
+            
+            <h3 style="margin-bottom: 20px;">Meu Perfil</h3>
+            
+            <div class="profile-avatar-container" onclick="document.getElementById('avatarInput').click()">
+                <img id="profileAvatarLarge" src="https://via.placeholder.com/100" class="profile-avatar-large" alt="Avatar">
+                <div class="profile-avatar-overlay"><i class="material-icons" style="font-size: 16px; color: white;">edit</i></div>
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="openImageCropper(event)">
+            
+            <!-- Barra de Progresso de Upload -->
+            <div id="uploadProgressContainer" style="display: none; width: 100%; background: #333; height: 4px; border-radius: 2px; margin: 15px 0; overflow: hidden;">
+                <div id="uploadProgressBar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.1s;"></div>
+            </div>
+            
+            <button onclick="removeUserAvatar()" style="background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; margin-bottom: 15px; text-decoration: underline;">Remover foto atual</button>
+            
+            <p id="profilePhoneDisplay" style="color: white; font-weight: bold; margin-bottom: 20px; font-size: 18px;"></p>
+            
+            <button onclick="logoutUser()" style="background: #333; color: white; border: 1px solid #555; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; margin-bottom: 10px;">Sair da Conta</button>
+            <button onclick="deleteUserAccount()" style="background: none; border: 1px solid #d32f2f; color: #d32f2f; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 12px;">Excluir Conta</button>
+        </div>
+    </div>
+
+    <!-- Modal de Recorte de Imagem -->
+    <div id="imageCropModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1001; justify-content: center; align-items: center;">
+        <div style="background: #1f1f1f; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; text-align: center;">
+            <h3 style="margin-bottom: 20px;">Recortar Imagem</h3>
+            <div class="img-container" style="max-height: 40vh; margin-bottom: 20px;">
+                <img id="imageToCrop" style="max-width: 100%;">
+            </div>
+            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px;">
+                <button onclick="rotateImage(-90)" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;" title="Girar Esquerda"><i class="material-icons">rotate_left</i></button>
+                <button onclick="rotateImage(90)" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;" title="Girar Direita"><i class="material-icons">rotate_right</i></button>
+                <button onclick="zoomImage(0.1)" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;" title="Aumentar Zoom"><i class="material-icons">zoom_in</i></button>
+                <button onclick="zoomImage(-0.1)" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;" title="Diminuir Zoom"><i class="material-icons">zoom_out</i></button>
+                <button onclick="resetCrop()" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;" title="Resetar"><i class="material-icons">refresh</i></button>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button onclick="cancelCrop()" style="background: #333; color: white; border: 1px solid #555; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                <button onclick="confirmCropAndUpload()" style="background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Confirmar e Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+</body>
+</html>

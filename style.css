@@ -1,0 +1,1071 @@
+:root {
+    --bg-color: #0f0f0f;
+    --card-bg: #1f1f1f;
+    --primary-color: #e50914; /* Vermelho estilo Netflix/YouTube */
+    --text-color: #ffffff;
+    --text-secondary: #aaaaaa;
+    --accent-color: #00a8ff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+/* Foco para navegação via teclado/controle remoto */
+*:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background-color: rgba(0,0,0,0.9);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.logo span {
+    color: var(--primary-color);
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Badge de Notificação no Avatar */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    border: 2px solid var(--bg-color);
+    display: none; /* Oculto por padrão */
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    z-index: 5;
+}
+
+@keyframes badge-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7); }
+    70% { transform: scale(1.2); box-shadow: 0 0 0 4px rgba(229, 9, 20, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); }
+}
+
+.notification-badge.blink {
+    animation: badge-pulse 1.5s infinite;
+}
+
+.live-badge {
+    background-color: var(--primary-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+/* Botão de Login Profissional */
+.btn-login {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-login:hover {
+    background: white;
+    color: black;
+    border-color: white;
+}
+
+/* Layout Principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Player ocupa 2/3, EPG ocupa 1/3 */
+    gap: 20px;
+}
+
+/* Player Responsivo */
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* Aspect Ratio 16:9 */
+    height: 0;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- Controles Personalizados Profissionais --- */
+
+/* Botão Central (Play/Pause) */
+.center-play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    cursor: pointer;
+    background: rgba(0,0,0,0.3);
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.center-play-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Permite clicar no vídeo/iframe quando oculto */
+}
+
+.play-circle {
+    width: 80px;
+    height: 80px;
+    background: rgba(229, 9, 20, 0.9);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    transition: transform 0.2s;
+}
+
+.play-circle i {
+    font-size: 48px;
+    color: white;
+}
+
+.center-play-overlay:hover .play-circle {
+    transform: scale(1.1);
+}
+
+/* Barra de Controles Inferior */
+.custom-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 25;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.video-wrapper:hover .custom-controls,
+.center-play-overlay:not(.hidden) ~ .custom-controls {
+    opacity: 1;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.control-btn i {
+    font-size: 28px;
+}
+
+.control-spacer {
+    flex-grow: 1;
+}
+
+/* Modo Cinema (Tela Cheia na Janela) */
+.video-wrapper.cinema-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000; /* Fica acima de tudo, inclusive navbar */
+    border-radius: 0;
+    padding-bottom: 0; /* Remove o aspect ratio hack */
+}
+
+/* Ticker (Rodapé do Player) */
+.ticker-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    overflow: hidden;
+    height: 30px;
+    line-height: 30px;
+    display: none; /* Oculto se vazio */
+    z-index: 20;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ticker-content {
+    display: inline-block;
+    white-space: nowrap;
+    padding-left: 100%;
+    animation: ticker 20s linear infinite;
+}
+
+@keyframes ticker {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-100%, 0, 0); }
+}
+
+/* Overlay Offline */
+.offline-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.offline-overlay img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Start Overlay (Play Button) */
+.start-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    backdrop-filter: blur(3px);
+}
+
+.play-btn-big {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7);
+    animation: pulse-red 2s infinite;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.play-btn-big i {
+    font-size: 48px;
+    margin-left: 5px; /* Ajuste visual para centralizar o triângulo */
+}
+
+.play-btn-big:hover {
+    transform: scale(1.1);
+}
+
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(229, 9, 20, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); }
+}
+
+/* Poll Overlay */
+.poll-overlay {
+    position: absolute;
+    bottom: 50px;
+    left: 20px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(5px);
+    z-index: 25;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    display: none; /* Oculto por padrão */
+    animation: slideInUp 0.5s ease-out;
+}
+
+.poll-overlay h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.poll-option {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-align: left;
+    width: 100%;
+    font-size: 14px;
+}
+
+.poll-option:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.poll-result {
+    position: relative;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.1);
+    overflow: hidden;
+    color: white;
+}
+
+.poll-result-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--primary-color);
+    opacity: 0.5;
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Seletor de Qualidade */
+.quality-selector {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    outline: none;
+}
+
+.stream-info {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+}
+
+.stream-info h1 {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.current-program {
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+.program-progress-container {
+    width: 100%;
+    max-width: 400px;
+    background-color: rgba(255,255,255,0.1);
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.program-progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+
+.time-remaining {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: 10px;
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+.views-counter {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+/* EPG Section */
+.epg-section {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    height: fit-content;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.epg-section h2 {
+    font-size: 18px;
+    margin-bottom: 5px;
+    border-left: 4px solid var(--primary-color);
+    padding-left: 10px;
+}
+
+.epg-date {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 20px;
+    padding-left: 14px;
+}
+
+.epg-search-container {
+    margin-bottom: 15px;
+    padding: 0 14px;
+}
+
+#epgSearch {
+    width: 100%;
+    padding: 10px;
+    background-color: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+#epgSearch:focus {
+    background-color: rgba(255,255,255,0.15);
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.epg-item {
+    display: flex;
+    padding: 12px;
+    border-bottom: none;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.epg-item:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+.epg-item.active {
+    background-color: rgba(229, 9, 20, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.epg-time {
+    font-weight: bold;
+    color: var(--text-secondary);
+    width: 60px;
+    font-size: 14px;
+}
+
+.epg-details {
+    flex: 1;
+    padding-right: 10px;
+    min-width: 0;
+}
+
+.epg-details h3 {
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.epg-details p {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.notify-btn {
+    background: none;
+    border: none;
+    color: #777;
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.3s ease;
+}
+
+.notify-btn:hover {
+    color: var(--primary-color);
+}
+
+.notify-btn.active {
+    color: var(--primary-color);
+}
+
+/* Animação da Descrição do EPG */
+.epg-description {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    font-size: 13px;
+    color: #aaa;
+    border-top: 1px solid transparent;
+    transition: all 0.3s ease-in-out;
+}
+
+.epg-description.expanded {
+    max-height: 300px; /* Altura máxima suficiente para o texto */
+    opacity: 1;
+    margin-top: 8px;
+    padding-top: 5px;
+    border-top-color: rgba(255,255,255,0.1);
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+    
+    .navbar {
+        padding: 15px 20px;
+    }
+
+    .logo {
+        font-size: 18px;
+    }
+    .user-menu {
+        gap: 10px;
+    }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* --- Admin Styles --- */
+.admin-card {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    background-color: rgba(0,0,0,0.3);
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-danger {
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.epg-edit-item {
+    display: grid;
+    grid-template-columns: 30px 40px 110px 1fr 1fr 1fr 50px;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.index-badge {
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-align: center;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--text-secondary);
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #333;
+}
+
+/* Tabs Navigation */
+.tabs-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    background-color: rgba(255,255,255,0.05);
+    color: white;
+}
+
+.tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Botão de Compartilhar */
+.share-btn {
+    background-color: rgba(37, 211, 102, 0.15);
+    color: #25D366; /* WhatsApp Green */
+    border: 1px solid rgba(37, 211, 102, 0.3);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.share-btn:hover {
+    background-color: rgba(37, 211, 102, 0.25);
+}
+
+.share-btn i {
+    font-size: 22px;
+}
+
+/* Toast Notification */
+.toast-notification {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none;
+}
+
+/* Tipos de Notificação (Cores) */
+.toast-notification.info { border-left: 5px solid #00a8ff; }
+.toast-notification.success { border-left: 5px solid #2ecc71; }
+.toast-notification.warning { border-left: 5px solid #f1c40f; }
+.toast-notification.alert { border-left: 5px solid #e74c3c; }
+
+.toast-notification.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- Efeitos Profissionais nos Botões --- */
+.interactive-btn {
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.interactive-btn:active {
+    transform: scale(0.92);
+}
+
+/* Animação de Ripple (Onda) ao clicar */
+@keyframes ripple-effect {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    100% { box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
+}
+
+.interactive-btn.clicked {
+    animation: ripple-effect 0.4s linear;
+}
+
+/* --- Perfil do Usuário --- */
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-color);
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.profile-avatar-large:hover {
+    opacity: 0.8;
+}
+
+.profile-avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-avatar-overlay {
+    position: absolute;
+    bottom: 15px;
+    right: 0;
+    background: var(--primary-color);
+    border-radius: 50%;
+    padding: 5px;
+    pointer-events: none;
+}
+
+/* --- Abas do Perfil --- */
+.profile-nav {
+    display: flex;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.profile-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.profile-tab-btn.active {
+    color: white;
+    border-bottom-color: var(--primary-color);
+}
+
+.profile-tab-content {
+    display: none;
+}
+
+.profile-tab-content.active {
+    display: block;
+}
+
+/* Lista de Mensagens */
+.message-list {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.message-item {
+    background: #333;
+    padding: 12px 15px;
+    border-radius: 18px;
+    border-top-left-radius: 4px; /* Balão estilo chat */
+    color: #fff;
+    position: relative;
+    max-width: 90%;
+    align-self: flex-start;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+.message-item.unread {
+    background: #444;
+    border: 1px solid var(--primary-color);
+}
+
+.message-date {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 5px;
+    text-align: right;
+    display: block;
+}
+
+/* Indicador de Digitando */
+.typing-indicator {
+    background: #333;
+    padding: 10px 15px;
+    border-radius: 18px;
+    border-top-left-radius: 4px;
+    width: fit-content;
+    margin-bottom: 10px;
+    animation: fadeIn 0.3s ease;
+    display: none; /* Oculto por padrão */
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #aaa;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* --- Sistema de Ticket de Suporte --- */
+.support-grid {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 15px;
+    height: 400px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #333;
+}
+
+.support-sidebar {
+    background: rgba(0,0,0,0.3);
+    border-right: 1px solid #333;
+    overflow-y: auto;
+}
+
+.support-user-item {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.support-user-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.support-user-item.active {
+    background: rgba(229, 9, 20, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.support-chat-area {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.support-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+}
+
+.chat-bubble.user { align-self: flex-start; background: #333; border-bottom-left-radius: 4px; }
+.chat-bubble.admin { align-self: flex-end; background: var(--primary-color); border-bottom-right-radius: 4px; }
+
+.chat-input-area { padding: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid #333; display: flex; gap: 10px; }
+
+/* --- Estilos para o Input de Telefone (Intl Tel Input) --- */
+.phone-input-styled {
+    width: 100%;
+    padding: 10px;
+    background: #333;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Ajustes do plugin para tema escuro */
+.iti {
+    width: 100%;
+    margin-bottom: 15px;
+    color: black; /* Texto do dropdown precisa ser escuro ou ajustado */
+}
+
+.iti__country-list {
+    background-color: #1f1f1f;
+    border: 1px solid #444;
+    color: white;
+    scrollbar-color: #444 #1f1f1f;
+}
+
+.iti__country.iti__highlight {
+    background-color: #333;
+}
